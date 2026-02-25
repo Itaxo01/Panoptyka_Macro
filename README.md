@@ -5,6 +5,9 @@ The code in this project will be entirely coded by myself, in order do learn a b
 
 The ambition is to get a executable capable of running on background on both linux and windows very fast.
 
+### Next steps
+By now, I can capture the screen image. The next step is create a function that analyzes this image and select the spots to click on. It should be dynammic, in the sense that it adapts to the current window resolution.
+
 ### Log
 (25/02/2026) Just set the initial project organization, and made the WindowManager to gather the window of the application using X11 (For now, I will develop it just for the linux, later on I think about the microsoft windows too). Wayland could be an option but it would be a lot more troublesome, but I got it that it's better in terms of security (which is a thing I don't need and definitely don't want as I need my program to spy on others).
 
