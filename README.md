@@ -8,3 +8,4 @@ The ambition is to get a executable capable of running on background on both lin
 ### Log
 (25/02/2026) Just set the initial project organization, and made the WindowManager to gather the window of the application using X11 (For now, I will develop it just for the linux, later on I think about the microsoft windows too). Wayland could be an option but it would be a lot more troublesome, but I got it that it's better in terms of security (which is a thing I don't need and definitely don't want as I need my program to spy on others).
 
+Now there is a basic .ppm plot to check if the selected screen is correct. 

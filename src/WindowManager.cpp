@@ -2,6 +2,8 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <stdexcept>
+#include <fstream>
 
 #define GAME_CLASS_NAME "steam_app_3882730" // This was obtained through testing, I'm not sure if it will hold the same through different environments 
 
@@ -71,4 +73,40 @@ Window WindowManager::getWindow() {
 		}
 	}
 	return current_window;
+}
+
+
+XImage* WindowManager::getImage(Window *window){
+	XWindowAttributes window_attributes;
+	Status s = XGetWindowAttributes(server, *window, &window_attributes);
+	if(!s){
+		throw runtime_error("Failed to capture window image.1");
+	}
+
+	// This is raw pixels, can't be ploted yet
+
+	XImage *image = XGetImage(server, *window, 0, 0, window_attributes.width, window_attributes.height, AllPlanes, ZPixmap);
+
+	if(!image) {
+		throw runtime_error("Failed to capture window image.2");
+	}
+
+	return image;
+}
+
+void WindowManager::plotImage(XImage *image){
+	ofstream file("image.ppm", ios::binary);
+	
+	// header declaration
+	file << "P6\n" << image->width << " " << image->height << "\n255\n";
+
+	// image->data is a 1D array, where each pixel uses 4 8bit values (BGRA).
+	// They are disposed in chars (8bit), so each color gets one.
+	for(unsigned int i = 0; i<image->width*image->height*4u; i+=4){
+		char blue = image->data[i], green = image->data[i+1], red = image->data[i+2]; // ignores alpha for ppm 
+		file.put(red);
+		file.put(green);
+		file.put(blue); // switch to RGB
+	}
+	XDestroyImage(image);
 }
