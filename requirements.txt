@@ -1,0 +1,5 @@
+## Linux (Debian/Ubuntu/Mint) dependencies
+## Install with: sudo apt-get install -y $(grep -v '^#' requirements.txt | grep -v '^$')
+
+libx11-dev
+libopencv-dev

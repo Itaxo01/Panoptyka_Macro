@@ -4,12 +4,13 @@
 #include <string>
 #include <stdexcept>
 #include <fstream>
+#include <iostream>
+#include <thread>
+
 
 #define GAME_CLASS_NAME "steam_app_3882730" // This was obtained through testing, I'm not sure if it will hold the same through different environments 
 
 using namespace std;
-
-WindowManager::WindowManager(Display* server) : server(server) {}
 
 Window WindowManager::getWindow() {
 	queue<Window> q; 
@@ -75,26 +76,49 @@ Window WindowManager::getWindow() {
 	return current_window;
 }
 
+WindowManager::WindowManager(Display* server) : server(server) {
+	this->game_window = getWindow();
+	if(this->game_window == None){
+		throw runtime_error("Game window isn't open or couldn't be found");
+	}
+}
 
-XImage* WindowManager::getImage(Window *window){
+
+XImage* WindowManager::getImage(Window window){
 	XWindowAttributes window_attributes;
-	Status s = XGetWindowAttributes(server, *window, &window_attributes);
+	Status s = XGetWindowAttributes(server, window, &window_attributes); // It's best to ask this every time, as the window shape could change.
 	if(!s){
-		throw runtime_error("Failed to capture window image.1");
+		throw runtime_error("Failed to capture window attributes: getImage()");
 	}
 
-	// This is raw pixels, can't be ploted yet
-
-	XImage *image = XGetImage(server, *window, 0, 0, window_attributes.width, window_attributes.height, AllPlanes, ZPixmap);
-
+	Window focus_window;
+	int revert_to;
+	while(True){ // Just to make sure that the game is focused
+		XGetInputFocus(server, &focus_window, &revert_to);
+		if(focus_window != window){
+			std::cout<<"Waiting for the game to gain focus"<<std::endl;
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		} else break;
+	}
+	std::cout<<"Focus gained"<<std::endl;
+	
+	XImage *image = XGetImage(server, window, 0, 0, window_attributes.width, window_attributes.height, AllPlanes, ZPixmap);
+	
 	if(!image) {
 		throw runtime_error("Failed to capture window image.2");
 	}
-
+	
+	// This is raw pixels on a pixmap
 	return image;
 }
 
-void WindowManager::plotImage(XImage *image){
+XImage* WindowManager::getImage(){
+	return getImage(this->game_window);
+}
+
+
+void WindowManager::plotImage(){
+	XImage *image = getImage();
 	ofstream file("image.ppm", ios::binary);
 	
 	// header declaration
