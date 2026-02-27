@@ -1,12 +1,11 @@
 #ifndef COORDINATE_FINDER_H
 #define COORDINATE_FINDER_H
 
-#include <vector>
-#include <X11/Xlib.h>
-#undef Status // This will not be used here and causes conflict with the opencv2.
-
 #include <string>
+#include <vector>
 #include <opencv2/opencv.hpp>
+
+#define PATTERN_LOCAL_ADDRESS "./images/replay_button1.png"
 
 /**
  * @brief This will be responsible to find the coordinates of the needed actions.
@@ -18,11 +17,14 @@ public:
 	
 	/**
 	 * @brief get the coordinates of each matching of the pattern on the game screen
-	 * @attention this function will not free the XImage
+	 * @attention Both the game_matrix and pattern_matrix should be BGR (3 layers)!!! 
 	 */
-	static std::vector<cv::Point> getMatches(XImage *game_pixmap, std::string &pattern_local_address);
+	static std::vector<cv::Point> getMatches(const cv::Mat &game_matrix, const cv::Mat &pattern_matrix);
+
+	std::vector<cv::Point> getMatchesReplay(const cv::Mat &game_matrix);
+
 private:
-	
+	const cv::Mat replay_pattern = cv::imread(PATTERN_LOCAL_ADDRESS, cv::IMREAD_COLOR);
 };
 
 #endif // COORDINATE_FINDER_H

@@ -7,9 +7,6 @@
 #include <iostream>
 #include <thread>
 
-
-#define GAME_CLASS_NAME "steam_app_3882730" // This was obtained through testing, I'm not sure if it will hold the same through different environments 
-
 using namespace std;
 
 Window WindowManager::getWindow() {
@@ -67,6 +64,7 @@ Window WindowManager::getWindow() {
 		XWindowAttributes window_attributes;
 		Status s = XGetWindowAttributes(server, w, &window_attributes);
 		if(s){
+			cout<<window_attributes.x<<" "<<window_attributes.y<<endl;
 			if(window_attributes.width > current_width){
 				current_width = window_attributes.width; // Pick the biggest window, there will be several.
 				current_window = w;
@@ -76,33 +74,54 @@ Window WindowManager::getWindow() {
 	return current_window;
 }
 
-WindowManager::WindowManager(Display* server) : server(server) {
-	this->game_window = getWindow();
-	if(this->game_window == None){
-		throw runtime_error("Game window isn't open or couldn't be found");
-	}
-}
 
-
-XImage* WindowManager::getImage(Window window){
-	XWindowAttributes window_attributes;
-	Status s = XGetWindowAttributes(server, window, &window_attributes); // It's best to ask this every time, as the window shape could change.
-	if(!s){
-		throw runtime_error("Failed to capture window attributes: getImage()");
-	}
-
+void WindowManager::wait_for_focus() {
 	Window focus_window;
 	int revert_to;
 	while(True){ // Just to make sure that the game is focused
 		XGetInputFocus(server, &focus_window, &revert_to);
-		if(focus_window != window){
+		if(focus_window != game_window){
 			std::cout<<"Waiting for the game to gain focus"<<std::endl;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		} else break;
 	}
-	std::cout<<"Focus gained"<<std::endl;
+}
+
+WindowManager::WindowManager(Display* server, bool display = false) : server(server) {
+	if(display){
+		cout<<"Proceeding with default window"<<endl;
+		this->game_window = DefaultRootWindow(this->server);
+	} else {
+		this->game_window = getWindow();
+		if(this->game_window == None){
+			throw runtime_error("Game window isn't open or couldn't be found");
+		}
+	}
+
+	Window _; // useless
+
+	XTranslateCoordinates(
+		this->server,
+		this->game_window, 
+		DefaultRootWindow(this->server), 
+		0, 0, 
+		&offset_x, // Get the coordinate offset 
+		&offset_y,
+		&_
+	);
+}
+
+
+XImage* WindowManager::getImage(){
+	XWindowAttributes window_attributes;
+	Status s = XGetWindowAttributes(server, game_window, &window_attributes); // It's best to ask this every time, as the window shape could change.
+	if(!s){
+		throw runtime_error("Failed to capture window attributes: getImage()");
+	}
+
+	wait_for_focus();
 	
-	XImage *image = XGetImage(server, window, 0, 0, window_attributes.width, window_attributes.height, AllPlanes, ZPixmap);
+	XImage *image = XGetImage(server, game_window, 0, 0, window_attributes.width, window_attributes.height, AllPlanes, ZPixmap);
 	
 	if(!image) {
 		throw runtime_error("Failed to capture window image.2");
@@ -110,10 +129,6 @@ XImage* WindowManager::getImage(Window window){
 	
 	// This is raw pixels on a pixmap
 	return image;
-}
-
-XImage* WindowManager::getImage(){
-	return getImage(this->game_window);
 }
 
 
@@ -133,4 +148,9 @@ void WindowManager::plotImage(){
 		file.put(blue); // switch to RGB
 	}
 	XDestroyImage(image);
+}
+
+
+std::pair<int, int> WindowManager::absolute_coordinates(int x, int y){
+	return pair(x+offset_x, y+offset_y);
 }

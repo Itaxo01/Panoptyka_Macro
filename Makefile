@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -I./include $(shell pkg-config --cflags opencv4)
-LDFLAGS = -lX11 $(shell pkg-config --libs opencv4)
+LDFLAGS = -lX11 -lXtst $(shell pkg-config --libs opencv4)
 
 TARGET = driver.out
 SRC_DIR = src
